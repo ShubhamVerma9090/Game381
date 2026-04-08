@@ -1,0 +1,12 @@
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+.vs/
+[Bb]uild/
+[Bb]uilds/
+UserSettings/
+*.csproj
+*.sln
+*.user
+*.log
+.vsconfig
