@@ -101,7 +101,7 @@ public class LaptopInteraction : MonoBehaviour
             // 2. Notify manager (if you still need it for overall game progress)
             if (PuzzleManager.Instance != null)
             {
-                PuzzleManager.Instance.PuzzleSolved();
+                PuzzleManager.Instance.LaptopPuzzleSolved();
             }
 
             CloseLaptop();

@@ -118,6 +118,8 @@ public class PlayerMovement : MonoBehaviour
         //anim.SetBool("isClimbing", isClimbing);
     }
 
+
+
     private void OnTriggerEnter2D(Collider2D col) { if (col.CompareTag("Ladder")) isOnLadder = true; }
     private void OnTriggerExit2D(Collider2D col) { if (col.CompareTag("Ladder")) { isOnLadder = false; isClimbing = false; } }
 

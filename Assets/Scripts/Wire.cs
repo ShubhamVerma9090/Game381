@@ -75,7 +75,7 @@ public class Wire : MonoBehaviour
 
         // All wires completed
         if (PuzzleManager.Instance != null)
-            PuzzleManager.Instance.PuzzleSolved();
+            PuzzleManager.Instance.WirePuzzleSolved();
     }
 
     public void ResetWire()

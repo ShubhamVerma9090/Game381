@@ -7,7 +7,7 @@ public class SuccessTrigger : MonoBehaviour
         // Tell the manager to turn on the light
         if (PuzzleManager.Instance != null)
         {
-            PuzzleManager.Instance.PuzzleSolved();
+            PuzzleManager.Instance.WirePuzzleSolved();
         }
 
         // Close the puzzle after 1 second
