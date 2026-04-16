@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class GoblinHealth : MonoBehaviour
+public class EnemyLvl3Health : MonoBehaviour
 {
     [SerializeField] private int maxHealth = 3;
 
@@ -28,12 +28,12 @@ public class GoblinHealth : MonoBehaviour
             healthBar += (i < currentHealth) ? "■" : "□";
         }
 
-        Debug.Log($"{gameObject.name}  Health: {currentHealth}/{maxHealth} {healthBar}");
+        Debug.Log($"{gameObject.name} Health: {currentHealth}/{maxHealth} {healthBar}");
         // ------------------------------------
 
         if (currentHealth > 0)
         {
-            animator.SetTrigger("Hit");
+            animator.SetTrigger("hurt");
         }
         else
         {
@@ -47,7 +47,7 @@ public class GoblinHealth : MonoBehaviour
         isDead = true;
 
         Debug.Log($"<color=red>{gameObject.name} has died!</color>");
-        animator.SetTrigger("Die");
+        animator.SetTrigger("die");
 
         Collider2D col = GetComponent<Collider2D>();
         if (col != null)

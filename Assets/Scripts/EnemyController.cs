@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Rendering;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -22,7 +23,7 @@ public class EnemyAI : MonoBehaviour
     [Header("Attack")]
     public float attackCooldown = 2f;
     private float lastAttackTime = -Mathf.Infinity;
-    
+
     [Header("Player Combat")]
     public float enemyDamage = 1f;
 
@@ -74,8 +75,8 @@ public class EnemyAI : MonoBehaviour
         animator.SetTrigger("Die");
         rb.linearVelocity = Vector2.zero;
 
-        // Optional: disable collider or destroy after a delay
-        Destroy(gameObject, 1f);
+        // Optional: disable collider or destroy after a delay
+        Destroy(gameObject, 1f);
     }
 
 
@@ -97,25 +98,25 @@ public class EnemyAI : MonoBehaviour
             lastAttackTime = Time.time;
             StopMoving();
             if (animator != null) animator.SetTrigger("Attack"); // Matches "Attack" trigger
-        }
+        }
     }
 
     void UpdateAnimation()
     {
         bool moving = Mathf.Abs(rb.linearVelocity.x) > 0.1f;
         if (animator != null) animator.SetBool("isMoving", moving); // Matches "isMoving" bool
-    }
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Check if the thing we bumped into is the Player
-        if (collision.CompareTag("Player"))
+        // Check if the thing we bumped into is the Player
+        if (collision.CompareTag("Player"))
         {
-            // Check if the player has a Health script (you'll need to create one for the player too!)
-            // PlayerHealth playerHealth = collision.GetComponent<PlayerHealth>();
-            // if (playerHealth != null) playerHealth.TakeDamage(enemyDamage);
+            // Check if the player has a Health script (you'll need to create one for the player too!)
+            // PlayerHealth playerHealth = collision.GetComponent<PlayerHealth>();
+            // if (playerHealth != null) playerHealth.TakeDamage(enemyDamage);
 
-            collision.GetComponent<Health>().TakeDamage(damage);
+            collision.GetComponent<Health>().TakeDamage(damage);
             Debug.Log("Player took damage!");
         }
     }
@@ -126,4 +127,4 @@ public class EnemyAI : MonoBehaviour
         if (player.position.x > transform.position.x) spriteRenderer.flipX = false;
         else spriteRenderer.flipX = true;
     }
-}
+} 

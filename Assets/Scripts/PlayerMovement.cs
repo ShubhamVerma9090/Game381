@@ -31,6 +31,8 @@ public class PlayerMovement : MonoBehaviour
     private bool isOnLadder;
     private bool isClimbing;
     private float originalGravity;
+    [SerializeField] private float trampolineForce = 20f;
+    public Transform spawnPoint;
 
     private void Awake()
     {
@@ -42,21 +44,31 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        // Inputs & Ground Check
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, groundLayer);
 
-        // Flip Sprite
-        if (horizontalInput != 0) sr.flipX = horizontalInput < 0;
+        if (groundCheck != null)
+            isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, groundLayer);
 
-        // Attack Logic (Mouse Left Click)
+        // --- FLIP LOGIC START ---
+        if (horizontalInput != 0)
+        {
+            bool shouldFlip = horizontalInput < 0;
+
+            // Only update if the direction actually changed
+            if (sr.flipX != shouldFlip)
+            {
+                sr.flipX = shouldFlip;
+                FlipAttackPoint(shouldFlip);
+            }
+        }
+        // --- FLIP LOGIC END ---
+
         if (Input.GetMouseButtonDown(0) && Time.time >= lastAttackTime + attackCooldown)
         {
             PerformAttack();
         }
 
-        // Jump Logic
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isClimbing)
         {
             body.linearVelocity = new Vector2(body.linearVelocity.x, jumpForce);
@@ -66,43 +78,66 @@ public class PlayerMovement : MonoBehaviour
         UpdateAnimatorParameters();
     }
 
+    private void FlipAttackPoint(bool facingLeft)
+    {
+        if (attackPoint == null) return;
+
+        // Get the current local position
+        Vector3 currentPos = attackPoint.localPosition;
+
+        // Force the X position to be positive if facing right, negative if facing left
+        // This is safer than just multiplying by -1 to prevent desync
+        float xOffset = Mathf.Abs(currentPos.x);
+        attackPoint.localPosition = new Vector3(facingLeft ? -xOffset : xOffset, currentPos.y, currentPos.z);
+    }
+
     private void FixedUpdate()
     {
-        if (!isClimbing)
+        if (isClimbing)
         {
-            body.linearVelocity = new Vector2(horizontalInput * moveSpeed, body.linearVelocity.y);
+            body.linearVelocity = new Vector2(horizontalInput * moveSpeed * 0.5f, verticalInput * climbSpeed);
         }
         else
         {
-            body.linearVelocity = new Vector2(horizontalInput * moveSpeed * 0.5f, verticalInput * climbSpeed);
+            body.linearVelocity = new Vector2(horizontalInput * moveSpeed, body.linearVelocity.y);
         }
     }
 
     private void PerformAttack()
     {
         lastAttackTime = Time.time;
-        anim.SetTrigger("attack1"); 
-        // NOTE: Call DealDamage() via Animation Event on the Attack clip!
+        anim.SetTrigger("attack1");
     }
 
     public void DealDamage()
     {
+        if (attackPoint == null) return;
+
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
+
         foreach (Collider2D enemy in hitEnemies)
         {
             EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
-            if (enemyAI != null) enemyAI.TakeHit(attackDamage);
+            if (enemyAI != null)
+                enemyAI.TakeHit(attackDamage);
         }
     }
 
     private void HandleLadderLogic()
     {
-        if (isOnLadder && Mathf.Abs(verticalInput) > 0.1f) isClimbing = true;
+        if (isOnLadder && Mathf.Abs(verticalInput) > 0.1f)
+        {
+            isClimbing = true;
+        }
+
+        if (!isOnLadder)
+        {
+            isClimbing = false;
+        }
 
         if (isClimbing)
         {
             body.gravityScale = 0f;
-            if (!isOnLadder) isClimbing = false;
         }
         else
         {
@@ -112,16 +147,34 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateAnimatorParameters()
     {
-        // MATCHES YOUR SCREENSHOT EXACTLY
-        anim.SetBool("run", horizontalInput != 0);
-        anim.SetBool("grounded", isGrounded);
-        //anim.SetBool("isClimbing", isClimbing);
+        anim.SetBool("run", horizontalInput != 0 && !isClimbing);
+        anim.SetBool("grounded", isGrounded && !isClimbing);
+        anim.SetBool("isClimbing", isClimbing);
     }
 
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        if (col.CompareTag("Ladder"))
+            isOnLadder = true;
+    }
 
+    private void OnTriggerExit2D(Collider2D col)
+    {
+        if (col.CompareTag("Ladder"))
+        {
+            isOnLadder = false;
+            isClimbing = false;
+            body.gravityScale = originalGravity;
+        }
+    }
 
-    private void OnTriggerEnter2D(Collider2D col) { if (col.CompareTag("Ladder")) isOnLadder = true; }
-    private void OnTriggerExit2D(Collider2D col) { if (col.CompareTag("Ladder")) { isOnLadder = false; isClimbing = false; } }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("tramp") && !isGrounded)
+        {
+            body.linearVelocity = new Vector2(body.linearVelocity.x, trampolineForce);
+        }
+    }
 
     private void OnDrawGizmosSelected()
     {
@@ -129,6 +182,12 @@ public class PlayerMovement : MonoBehaviour
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+        }
+
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
         }
     }
 }

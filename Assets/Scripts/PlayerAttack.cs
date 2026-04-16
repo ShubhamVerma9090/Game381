@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
@@ -10,11 +11,12 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private LayerMask enemyLayers;
 
     private Animator anim;
-    private float cooldownTimer = Mathf.Infinity;
+    private float cooldownTimer;
 
     private void Awake()
     {
         anim = GetComponentInChildren<Animator>();
+        cooldownTimer = attackCooldown;
     }
 
     private void Update()
@@ -23,37 +25,61 @@ public class PlayerAttack : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0) && cooldownTimer >= attackCooldown)
         {
-            Attack();
+            StartAttack();
         }
     }
 
-    private void Attack()
+    private void StartAttack()
     {
-        if (anim == null)
-        {
-            Debug.LogError("Animator not found!");
-            return;
-        }
+        if (anim == null || attackPoint == null) return;
 
-        anim.SetTrigger("attack1");
-
-      
         cooldownTimer = 0f;
+        anim.SetTrigger("attack1");
+    }
 
-        
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(
-            attackPoint.position,
-            attackRange,
-            enemyLayers
-        );
+    // Called by Animation Event
+    public void Attack()
+    {
+        // Check for enemies in range
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
 
-        
+        Debug.Log("Enemies hit: " + hitEnemies.Length);
+
         foreach (Collider2D enemy in hitEnemies)
         {
-            EnemyAI enemyScript = enemy.GetComponent<EnemyAI>();
-            if (enemyScript != null)
+            // 1. Check for Goblin
+            GoblinHealth goblin = enemy.GetComponent<GoblinHealth>() ?? enemy.GetComponentInParent<GoblinHealth>();
+            if (goblin != null)
             {
-                enemyScript.TakeHit(attackDamage);
+                goblin.TakeDamage(attackDamage);
+                continue;
+            }
+
+            // 2. CHECK FOR BOSSLEVEL2 (The most important one)
+            BossLevel2 boss = enemy.GetComponent<BossLevel2>() ?? enemy.GetComponentInParent<BossLevel2>();
+            if (boss != null)
+            {
+                // Explicitly pass attackDamage as a float
+                boss.TakeDamage((float)attackDamage);
+                Debug.Log("Hit BossLevel2 script!");
+                continue;
+            }
+
+            // 3. Check for Boss2Health (Backup)
+            Boss2Health bossHealth = enemy.GetComponent<Boss2Health>() ?? enemy.GetComponentInParent<Boss2Health>();
+            if (bossHealth != null)
+            {
+                bossHealth.TakeDamage(attackDamage);
+                Debug.Log("Hit Boss2Health script!");
+                continue;
+            }
+
+            EnemyLvl3Health lvl3 = enemy.GetComponent<EnemyLvl3Health>() ?? enemy.GetComponentInParent<EnemyLvl3Health>();
+            if (lvl3 != null)
+            {
+                lvl3.TakeDamage(attackDamage);
+                Debug.Log("Hit Enemy Level 3!");
+                continue;
             }
         }
     }
@@ -61,8 +87,8 @@ public class PlayerAttack : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 }
+

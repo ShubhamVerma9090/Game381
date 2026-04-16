@@ -17,3 +17,4 @@ public class SuccessTrigger : MonoBehaviour
     void HidePuzzle() => PuzzleManager.Instance.ClosePuzzle();
 }
 
+

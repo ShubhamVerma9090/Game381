@@ -6,7 +6,7 @@ public class Breaker : MonoBehaviour
     [Header("Visuals")]
     public Light2D streetLight;
     public SpriteRenderer lampSR;
-    public GameObject interactionPrompt; // A small "Press E" UI icon
+    public GameObject promptText;   // "Press E to Repair"
 
     [Header("Settings")]
     public KeyCode interactKey = KeyCode.E;
@@ -17,18 +17,23 @@ public class Breaker : MonoBehaviour
     private bool _isFixed;
     private bool _puzzleOpen;
 
+
     private void Start()
     {
-        // Set initial state: Light off, lamp dim
-        if (streetLight != null) streetLight.enabled = false;
-        if (lampSR != null) lampSR.color = brokenColor;
-        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+        if (streetLight != null)
+            streetLight.enabled = false;
+
+        if (lampSR != null)
+            lampSR.color = brokenColor;
+
+        if (promptText != null)
+            promptText.SetActive(false);
     }
 
     private void Update()
     {
-        // Don't allow interaction if already fixed or if puzzle is already open
-        if (!_playerInRange || _isFixed || _puzzleOpen) return;
+        if (!_playerInRange || _isFixed || _puzzleOpen)
+            return;
 
         if (Input.GetKeyDown(interactKey))
         {
@@ -39,22 +44,34 @@ public class Breaker : MonoBehaviour
     private void OpenBreakerPuzzle()
     {
         _puzzleOpen = true;
-        if (interactionPrompt != null) interactionPrompt.SetActive(false);
 
-        // Call your manager
-        PuzzleManager.Instance.OpenPuzzle(this);
+        if (promptText != null)
+            promptText.SetActive(false);
 
-        // Optional: Pause player movement here if you have a PlayerController
-        // PlayerController.Instance.DisableMovement(); 
+        if (PuzzleManager.Instance != null)
+        {
+            PuzzleManager.Instance.OpenPuzzle(this);
+        }
+        else
+        {
+            Debug.LogWarning("PuzzleManager instance not found.");
+        }
     }
 
     public void FinishPuzzle()
     {
         _isFixed = true;
         _puzzleOpen = false;
+        _playerInRange = false;
 
-        if (streetLight != null) streetLight.enabled = true;
-        if (lampSR != null) lampSR.color = fixedColor;
+        if (streetLight != null)
+            streetLight.enabled = true;
+
+        if (lampSR != null)
+            lampSR.color = fixedColor;
+
+        if (promptText != null)
+            promptText.SetActive(false);
 
         Debug.Log("Breaker fixed! Streetlight is now active.");
     }
@@ -64,7 +81,9 @@ public class Breaker : MonoBehaviour
         if (collision.CompareTag("Player") && !_isFixed)
         {
             _playerInRange = true;
-            if (interactionPrompt != null) interactionPrompt.SetActive(true);
+
+            if (promptText != null)
+                promptText.SetActive(true);
         }
     }
 
@@ -73,15 +92,17 @@ public class Breaker : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _playerInRange = false;
-            if (interactionPrompt != null) interactionPrompt.SetActive(false);
 
-            // If the player walks away, close the puzzle automatically
+            if (promptText != null)
+                promptText.SetActive(false);
+
             if (_puzzleOpen)
             {
                 _puzzleOpen = false;
-                PuzzleManager.Instance.ClosePuzzle(); // Make sure your manager has this!
+
+                if (PuzzleManager.Instance != null)
+                    PuzzleManager.Instance.ClosePuzzle();
             }
         }
     }
 }
-
