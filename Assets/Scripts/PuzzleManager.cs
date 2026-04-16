@@ -13,6 +13,10 @@
 //    public GameObject laptopUI;
 //    public List<GameObject> laptopObjectsToActivate = new List<GameObject>();
 
+//    [Header("Switchboard Setup")]
+//    public GameObject switchboardUI;
+//    public List<GameObject> switchboardObjectsToActivate = new List<GameObject>();
+
 //    private Breaker _currentBreaker;
 //    private LaptopInteraction _currentLaptop;
 
@@ -24,11 +28,15 @@
 //        // Hide UI elements
 //        if (wirePuzzleUI != null) wirePuzzleUI.SetActive(false);
 //        if (laptopUI != null) laptopUI.SetActive(false);
+//        if (switchboardUI != null) switchboardUI.SetActive(false);
 
 //        // Hide all environmental objects on start
-//        foreach (GameObject obj in wireObjectsToActivate) if (obj != null) obj.SetActive(false);
-//        foreach (GameObject obj in laptopObjectsToActivate) if (obj != null) obj.SetActive(false);
+//        ToggleObjectList(wireObjectsToActivate, false);
+//        ToggleObjectList(laptopObjectsToActivate, false);
+//        ToggleObjectList(switchboardObjectsToActivate, false);
 //    }
+
+//    // --- Opening UIs ---
 
 //    public void OpenPuzzle(Breaker sender)
 //    {
@@ -42,27 +50,47 @@
 //        if (laptopUI != null) laptopUI.SetActive(true);
 //    }
 
+//    public void OpenSwitchboard()
+//    {
+//        if (switchboardUI != null) switchboardUI.SetActive(true);
+//    }
+
 //    public void ClosePuzzle()
 //    {
 //        if (wirePuzzleUI != null) wirePuzzleUI.SetActive(false);
 //        if (laptopUI != null) laptopUI.SetActive(false);
+//        if (switchboardUI != null) switchboardUI.SetActive(false);
 //        Time.timeScale = 1;
 //    }
 
-//    // Call this when the Wire Puzzle is finished
+//    // --- Solving Puzzles ---
+
 //    public void WirePuzzleSolved()
 //    {
-//        foreach (GameObject obj in wireObjectsToActivate) if (obj != null) obj.SetActive(true);
+//        ToggleObjectList(wireObjectsToActivate, true);
 //        if (_currentBreaker != null) _currentBreaker.FinishPuzzle();
 //        ClosePuzzle();
 //    }
 
-//    // Call this when the Laptop Puzzle is finished
 //    public void LaptopPuzzleSolved()
 //    {
-//        foreach (GameObject obj in laptopObjectsToActivate) if (obj != null) obj.SetActive(true);
-//        // Add laptop finish logic here if needed
+//        ToggleObjectList(laptopObjectsToActivate, true);
 //        ClosePuzzle();
+//    }
+
+//    public void SwitchboardSolved()
+//    {
+//        ToggleObjectList(switchboardObjectsToActivate, true);
+//        ClosePuzzle();
+//    }
+
+//    // Helper method to reduce code repetition
+//    private void ToggleObjectList(List<GameObject> list, bool state)
+//    {
+//        foreach (GameObject obj in list)
+//        {
+//            if (obj != null) obj.SetActive(state);
+//        }
 //    }
 //}
 
@@ -85,42 +113,70 @@ public class PuzzleManager : MonoBehaviour
     public GameObject switchboardUI;
     public List<GameObject> switchboardObjectsToActivate = new List<GameObject>();
 
+    [HideInInspector] public bool isUIOpen = false;
+
     private Breaker _currentBreaker;
     private LaptopInteraction _currentLaptop;
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
-        else { Destroy(gameObject); return; }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        // Hide UI elements
         if (wirePuzzleUI != null) wirePuzzleUI.SetActive(false);
         if (laptopUI != null) laptopUI.SetActive(false);
         if (switchboardUI != null) switchboardUI.SetActive(false);
 
-        // Hide all environmental objects on start
         ToggleObjectList(wireObjectsToActivate, false);
         ToggleObjectList(laptopObjectsToActivate, false);
         ToggleObjectList(switchboardObjectsToActivate, false);
-    }
 
-    // --- Opening UIs ---
+        isUIOpen = false;
+        Time.timeScale = 1f;
+    }
 
     public void OpenPuzzle(Breaker sender)
     {
         _currentBreaker = sender;
+        isUIOpen = true;
+
         if (wirePuzzleUI != null) wirePuzzleUI.SetActive(true);
+
+        Time.timeScale = 0f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     public void OpenLaptop(LaptopInteraction sender)
     {
         _currentLaptop = sender;
+        isUIOpen = true;
+
         if (laptopUI != null) laptopUI.SetActive(true);
+
+        Time.timeScale = 0f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        if (_currentLaptop != null)
+        {
+            _currentLaptop.OpenLaptop();
+        }
     }
 
     public void OpenSwitchboard()
     {
+        isUIOpen = true;
+
         if (switchboardUI != null) switchboardUI.SetActive(true);
+
+        Time.timeScale = 0f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     public void ClosePuzzle()
@@ -128,15 +184,20 @@ public class PuzzleManager : MonoBehaviour
         if (wirePuzzleUI != null) wirePuzzleUI.SetActive(false);
         if (laptopUI != null) laptopUI.SetActive(false);
         if (switchboardUI != null) switchboardUI.SetActive(false);
-        Time.timeScale = 1;
-    }
 
-    // --- Solving Puzzles ---
+        isUIOpen = false;
+        Time.timeScale = 1f;
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
 
     public void WirePuzzleSolved()
     {
         ToggleObjectList(wireObjectsToActivate, true);
-        if (_currentBreaker != null) _currentBreaker.FinishPuzzle();
+
+        if (_currentBreaker != null)
+            _currentBreaker.FinishPuzzle();
+
         ClosePuzzle();
     }
 
@@ -152,12 +213,12 @@ public class PuzzleManager : MonoBehaviour
         ClosePuzzle();
     }
 
-    // Helper method to reduce code repetition
     private void ToggleObjectList(List<GameObject> list, bool state)
     {
         foreach (GameObject obj in list)
         {
-            if (obj != null) obj.SetActive(state);
+            if (obj != null)
+                obj.SetActive(state);
         }
     }
 }

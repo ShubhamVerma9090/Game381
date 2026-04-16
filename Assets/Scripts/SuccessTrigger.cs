@@ -2,19 +2,28 @@ using UnityEngine;
 
 public class SuccessTrigger : MonoBehaviour
 {
+    public DogController dog;
+
     private void OnEnable()
     {
-        // Tell the manager to turn on the light
         if (PuzzleManager.Instance != null)
         {
             PuzzleManager.Instance.WirePuzzleSolved();
         }
 
-        // Close the puzzle after 1 second
-        Invoke("HidePuzzle", 1.0f);
+        if (dog != null)
+        {
+            dog.OnBreakerFixed();
+        }
+
+        Invoke(nameof(HidePuzzle), 1.0f);
     }
 
-    void HidePuzzle() => PuzzleManager.Instance.ClosePuzzle();
+    void HidePuzzle()
+    {
+        if (PuzzleManager.Instance != null)
+        {
+            PuzzleManager.Instance.ClosePuzzle();
+        }
+    }
 }
-
-

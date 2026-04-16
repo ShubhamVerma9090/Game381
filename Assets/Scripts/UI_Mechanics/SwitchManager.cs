@@ -70,6 +70,13 @@ public class SwitchManager : MonoBehaviour
         {
             PuzzleManager.Instance.SwitchboardSolved();
             Debug.Log("Switchboard Solved! Notifying PuzzleManager.");
+
+            DogController dog = FindFirstObjectByType<DogController>();
+            if (dog != null)
+            {
+                dog.OnBreakerFixed();
+            }
+
         }
 
         // 2. Close the UI (You can keep this here or move it to PuzzleManager.ClosePuzzle)

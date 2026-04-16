@@ -50,7 +50,7 @@ public class LaptopInteraction : MonoBehaviour
 
 
 
-    void OpenLaptop()
+    public void OpenLaptop()
 
     {
 
@@ -92,18 +92,26 @@ public class LaptopInteraction : MonoBehaviour
         {
             Debug.Log("Password Correct!");
 
-            // 1. Turn on the lights directly
+            // 1. Turn on lights
             foreach (GameObject light in streetLights)
             {
                 light.SetActive(true);
             }
 
-            // 2. Notify manager (if you still need it for overall game progress)
+            
             if (PuzzleManager.Instance != null)
             {
                 PuzzleManager.Instance.LaptopPuzzleSolved();
             }
 
+            
+            DogController dog = FindFirstObjectByType<DogController>();
+            if (dog != null)
+            {
+                dog.OnBreakerFixed();
+            }
+
+            
             CloseLaptop();
         }
         else
